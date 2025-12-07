@@ -11,19 +11,27 @@ export default function Dashboard({ date = new Date(), showExport = false }) {
     const analysis = React.useMemo(() => analyzeProductivity(data), [data]);
 
     const handleExport = () => {
-        const exportData = {
-            date: date.toDateString(),
-            productivityScore: analysis.overallScore,
-            stats: analysis.stats,
-            entries: analysis.processedEntries,
-            suggestions: analysis.suggestions
-        };
-        const dataStr = JSON.stringify(exportData, null, 2);
-        const blob = new Blob([dataStr], { type: "application/json" });
+        const dateStr = date.toDateString();
+        // Filter and format the raw entries if available in 'data', or use 'processedEntries' from analysis
+        // analysis.processedEntries is usually what we want.
+
+        let textContent = `Productivity Analysis for ${dateStr}\n${'='.repeat(40)}\n\n`;
+
+        if (analysis.processedEntries && analysis.processedEntries.length > 0) {
+            textContent += `Entries:\n${'-'.repeat(20)}\n`;
+            textContent += analysis.processedEntries.map(entry => {
+                const time = entry.date ? entry.date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : 'Unknown Time';
+                return `[${time}] ${entry.text}`;
+            }).join('\n\n');
+        } else {
+            textContent += "No entries recorded for this day.";
+        }
+
+        const blob = new Blob([textContent], { type: "text/plain" });
         const url = URL.createObjectURL(blob);
         const link = document.createElement("a");
         link.href = url;
-        link.download = `productivity_analysis_${date.toISOString().split('T')[0]}.json`;
+        link.download = `productivity_${date.toISOString().split('T')[0]}.txt`;
         link.click();
     };
 
