@@ -4,9 +4,28 @@ import { analyzeProductivity } from '../utils/analyze';
 import { Activity, TrendingUp, AlertCircle, Clock, Calendar as CalendarIcon } from 'lucide-react';
 import { motion } from 'framer-motion';
 
-export default function Dashboard({ date = new Date() }) {
+import { Download } from 'lucide-react';
+
+export default function Dashboard({ date = new Date(), showExport = false }) {
     const { data, loading } = useFirestoreData(date);
     const analysis = React.useMemo(() => analyzeProductivity(data), [data]);
+
+    const handleExport = () => {
+        const exportData = {
+            date: date.toDateString(),
+            productivityScore: analysis.overallScore,
+            stats: analysis.stats,
+            entries: analysis.processedEntries,
+            suggestions: analysis.suggestions
+        };
+        const dataStr = JSON.stringify(exportData, null, 2);
+        const blob = new Blob([dataStr], { type: "application/json" });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement("a");
+        link.href = url;
+        link.download = `productivity_analysis_${date.toISOString().split('T')[0]}.json`;
+        link.click();
+    };
 
     if (loading) {
         return (
@@ -25,9 +44,19 @@ export default function Dashboard({ date = new Date() }) {
                     <h1 className="text-3xl font-bold text-white mb-2">
                         {isToday ? "Daily Insight" : date.toLocaleDateString(undefined, { weekday: 'long', month: 'long', day: 'numeric' })}
                     </h1>
-                    <p className="text-muted-foreground">
-                        {isToday ? "Here is how you performed today." : "Historical performance overview."}
-                    </p>
+                    <div className="flex items-center gap-4">
+                        <p className="text-muted-foreground">
+                            {isToday ? "Here is how you performed today." : "Historical performance overview."}
+                        </p>
+                        {showExport && (
+                            <button
+                                onClick={handleExport}
+                                className="flex items-center gap-2 px-3 py-1 rounded-lg bg-white/5 hover:bg-white/10 text-xs text-purple-400 border border-purple-500/20 transition-colors"
+                            >
+                                <Download className="w-3 h-3" /> Export
+                            </button>
+                        )}
+                    </div>
                 </div>
                 <div className="text-right">
                     <p className="text-4xl font-black text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-blue-400">
@@ -146,8 +175,8 @@ function TimelineItem({ item, index }) {
                 </div>
                 <div className="mt-2 flex gap-2">
                     <span className={`text-[10px] px-2 py-0.5 rounded-full border ${isProductive
-                            ? 'bg-emerald-500/10 border-emerald-500/20 text-emerald-400'
-                            : 'bg-rose-500/10 border-rose-500/20 text-rose-400'
+                        ? 'bg-emerald-500/10 border-emerald-500/20 text-emerald-400'
+                        : 'bg-rose-500/10 border-rose-500/20 text-rose-400'
                         }`}>
                         {item.type.toUpperCase()}
                     </span>

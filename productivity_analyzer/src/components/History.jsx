@@ -101,12 +101,29 @@ export default function History() {
                             })}
                         </div>
 
-                        <button
-                            onClick={jumpToToday}
-                            className="w-full mt-6 py-2 px-4 rounded-xl border border-white/10 text-sm font-medium text-gray-400 hover:text-white hover:bg-white/5 transition-colors"
-                        >
-                            Jump to Today
-                        </button>
+                        <div className="flex gap-2 mt-6">
+                            <button
+                                onClick={jumpToToday}
+                                className="flex-1 py-2 px-4 rounded-xl border border-white/10 text-sm font-medium text-gray-400 hover:text-white hover:bg-white/5 transition-colors"
+                            >
+                                Jump to Today
+                            </button>
+                            <button
+                                onClick={() => {
+                                    // Hacky export, but since we don't have the data in this component context directly (it's in Dashboard), 
+                                    // we might need to rely on Dashboard to have the export, OR we pass a ref, OR we just use a context.
+                                    // Actually, simple way: Move logic to Dashboard OR (better for this prompt) just tell user to export from Dashboard if we add it there.
+                                    // BUT prompt designated History page.
+                                    // Let's modify DASHBOARD to expose export or handle it here?
+                                    // Actually, I'll pass a prop "exportRef" or simple: I'll add the button inside Dashboard component instead?
+                                    // No, the prompt says "export each days journal... in the first app... history tab...". 
+                                    // For the second app (web), "Add Daily Export". It fits well in the header or near the content.
+                                    // Let's add it to the Dashboard component itself, as it holds the 'data' and 'analysis'.
+                                }}
+                                className="hidden"
+                            >
+                            </button>
+                        </div>
                     </div>
                 </div>
 
@@ -120,7 +137,7 @@ export default function History() {
                             exit={{ opacity: 0, y: -10 }}
                             transition={{ duration: 0.2 }}
                         >
-                            <Dashboard date={selectedDate} />
+                            <Dashboard date={selectedDate} showExport={true} />
                         </motion.div>
                     </AnimatePresence>
                 </div>
