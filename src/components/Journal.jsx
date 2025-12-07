@@ -105,29 +105,34 @@ export default function Journal({ user }) {
                     placeholder="I built a cool feature..."
                     autoFocus
                 />
-                <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '16px' }}>
-                    <button
-                        onClick={requestNotificationPermission}
-                        style={{
-                            backgroundColor: 'transparent',
-                            color: notificationStatus === 'granted' ? '#238636' : '#8b949e',
-                            border: '1px solid #30363d'
-                        }}
-                    >
-                        {notificationStatus === 'granted' ? 'Notifications Active' : 'Enable Notifications'}
-                    </button>
-                    {!user.isAnonymous ? (
-                        <span style={{ fontSize: '0.8rem', color: '#58a6ff', alignSelf: 'center' }}>Synced ✅</span>
-                    ) : (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', marginTop: '16px' }}>
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
                         <button
-                            onClick={handleLinkGoogle}
-                            style={{ backgroundColor: '#1f6feb', color: 'white', border: 'none', marginLeft: '8px' }}
+                            onClick={requestNotificationPermission}
+                            className="secondary"
+                            style={{
+                                color: notificationStatus === 'granted' ? '#4ade80' : '#9ca3af',
+                            }}
                         >
-                            Sync Data
+                            {notificationStatus === 'granted' ? '🔔 Active' : 'Enable 🔔'}
                         </button>
-                    )}
-                    <button className="primary" onClick={saveEntry} disabled={saving}>
-                        {saving ? 'Saving...' : 'Save'}
+
+                        {!user.isAnonymous ? (
+                            <div className="secondary" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.9rem', color: '#60a5fa' }}>
+                                Synced ✅
+                            </div>
+                        ) : (
+                            <button
+                                onClick={handleLinkGoogle}
+                                className="secondary"
+                                style={{ backgroundColor: 'rgba(59, 130, 246, 0.1)', color: '#60a5fa', border: '1px solid rgba(59, 130, 246, 0.2)' }}
+                            >
+                                Sync Data
+                            </button>
+                        )}
+                    </div>
+                    <button className="primary" onClick={saveEntry} disabled={saving} style={{ width: '100%' }}>
+                        {saving ? 'Saving...' : 'Save Entry'}
                     </button>
                 </div>
             </div>
