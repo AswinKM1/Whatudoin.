@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { db, auth, messaging } from '../firebase';
 import { collection, addDoc, serverTimestamp, query, orderBy, limit, onSnapshot } from 'firebase/firestore';
+import { GoogleAuthProvider, linkWithPopup } from 'firebase/auth';
 import { getToken } from 'firebase/messaging';
 import { motion, AnimatePresence } from 'framer-motion';
 
@@ -74,6 +75,21 @@ export default function Journal({ user }) {
         }
     };
 
+    const handleLinkGoogle = async () => {
+        const provider = new GoogleAuthProvider();
+        try {
+            await linkWithPopup(auth.currentUser, provider);
+            // User is now linked! UI will update via basic auth state if we triggered a re-render, 
+            // but component receives `user` prop. Parent might need to update or we force update.
+            // Since `user` object in Firebase SDK mutates, a force update might be needed 
+            // but typically onAuthStateChanged fires? Link doesn't always fire it.
+            alert("Account linked successfully! You can now login on other devices.");
+        } catch (error) {
+            console.error("Link failed:", error);
+            setErrorMsg("Link failed: " + error.message);
+        }
+    };
+
     return (
         <div className="fade-in">
             {errorMsg && (
@@ -100,6 +116,16 @@ export default function Journal({ user }) {
                     >
                         {notificationStatus === 'granted' ? 'Notifications Active' : 'Enable Notifications'}
                     </button>
+                    {!user.isAnonymous ? (
+                        <span style={{ fontSize: '0.8rem', color: '#58a6ff', alignSelf: 'center' }}>Synced ✅</span>
+                    ) : (
+                        <button
+                            onClick={handleLinkGoogle}
+                            style={{ backgroundColor: '#1f6feb', color: 'white', border: 'none', marginLeft: '8px' }}
+                        >
+                            Sync Data
+                        </button>
+                    )}
                     <button className="primary" onClick={saveEntry} disabled={saving}>
                         {saving ? 'Saving...' : 'Save'}
                     </button>
