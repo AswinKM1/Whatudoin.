@@ -37,7 +37,7 @@ function App() {
       {!user ? (
         <Auth onLogin={() => { }} />
       ) : (
-        <Journal />
+        <Journal user={user} />
       )}
     </div>
   );

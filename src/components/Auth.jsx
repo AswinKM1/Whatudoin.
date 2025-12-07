@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { auth } from '../firebase';
-import { signInAnonymously } from 'firebase/auth';
+import { signInAnonymously, setPersistence, browserLocalPersistence } from 'firebase/auth';
 import { motion } from 'framer-motion';
 
 export default function Auth({ onLogin }) {
@@ -11,6 +11,7 @@ export default function Auth({ onLogin }) {
         setLoading(true);
         setError(null);
         try {
+            await setPersistence(auth, browserLocalPersistence);
             await signInAnonymously(auth);
             if (onLogin) onLogin();
         } catch (err) {

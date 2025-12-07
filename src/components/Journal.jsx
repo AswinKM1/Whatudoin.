@@ -4,32 +4,37 @@ import { collection, addDoc, serverTimestamp, query, orderBy, limit, onSnapshot 
 import { getToken } from 'firebase/messaging';
 import { motion, AnimatePresence } from 'framer-motion';
 
-export default function Journal() {
+export default function Journal({ user }) {
     const [entry, setEntry] = useState('');
     const [saving, setSaving] = useState(false);
     const [recentEntries, setRecentEntries] = useState([]);
     const [notificationStatus, setNotificationStatus] = useState('default'); // default, granted, denied
+    const [errorMsg, setErrorMsg] = useState(null);
 
     useEffect(() => {
-        // Load recent entries
-        if (!auth.currentUser) return;
+        let unsubscribe = () => { };
 
-        const q = query(
-            collection(db, 'users', auth.currentUser.uid, 'entries'),
-            orderBy('createdAt', 'desc'),
-            limit(5)
-        );
+        if (user) {
+            const q = query(
+                collection(db, 'users', user.uid, 'entries'),
+                orderBy('createdAt', 'desc'),
+                limit(5)
+            );
 
-        const unsubscribe = onSnapshot(q, (snapshot) => {
-            const entries = snapshot.docs.map(doc => ({
-                id: doc.id,
-                ...doc.data()
-            }));
-            setRecentEntries(entries);
-        });
+            unsubscribe = onSnapshot(q, (snapshot) => {
+                const entries = snapshot.docs.map(doc => ({
+                    id: doc.id,
+                    ...doc.data()
+                }));
+                setRecentEntries(entries);
+            }, (error) => {
+                console.error("Error fetching entries:", error);
+                setErrorMsg("Error loading entries: " + error.message);
+            });
+        }
 
         return () => unsubscribe();
-    }, []);
+    }, [user]);
 
     const requestNotificationPermission = async () => {
         try {
@@ -37,17 +42,11 @@ export default function Journal() {
             setNotificationStatus(permission);
 
             if (permission === 'granted') {
-                // Get token
-                // VAPID key should be in env or just use default if configured in firebase console
-                // For simplicity, we assume default if not provided, but ideally needs VAPID key from Console -> Project Settings -> Cloud Messaging
-                const token = await getToken(messaging, {
-                    // vapidKey: 'YOUR_VAPID_KEY' // Adding this later if needed
-                });
+                const token = await getToken(messaging);
                 console.log('FCM Token:', token);
 
-                // Save token to user profile
-                if (auth.currentUser && token) {
-                    await addDoc(collection(db, 'users', auth.currentUser.uid, 'tokens'), {
+                if (user && token) {
+                    await addDoc(collection(db, 'users', user.uid, 'tokens'), {
                         token: token,
                         createdAt: serverTimestamp()
                     });
@@ -62,14 +61,14 @@ export default function Journal() {
         if (!entry.trim()) return;
         setSaving(true);
         try {
-            await addDoc(collection(db, 'users', auth.currentUser.uid, 'entries'), {
+            await addDoc(collection(db, 'users', user.uid, 'entries'), {
                 text: entry,
                 createdAt: serverTimestamp()
             });
             setEntry('');
         } catch (error) {
             console.error("Error saving entry:", error);
-            alert("Failed to save entry");
+            setErrorMsg("Failed to save: " + error.message);
         } finally {
             setSaving(false);
         }
@@ -77,6 +76,11 @@ export default function Journal() {
 
     return (
         <div className="fade-in">
+            {errorMsg && (
+                <div style={{ backgroundColor: '#f85149', color: 'white', padding: '10px', borderRadius: '6px', marginBottom: '16px', fontSize: '0.9rem' }}>
+                    {errorMsg}
+                </div>
+            )}
             <div className="card">
                 <h2 style={{ marginTop: 0 }}>What did you do last hour?</h2>
                 <textarea
